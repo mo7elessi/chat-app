@@ -1,10 +1,11 @@
 import 'package:chat_app/shared/components/constance.dart';
-import 'package:chat_app/shared/components/main_components.dart';
+import 'package:chat_app/shared/components/shared_components.dart';
 import 'package:chat_app/shared/cubit/cubit.dart';
 import 'package:chat_app/shared/cubit/state.dart';
 import 'package:chat_app/shared/Network/local/cache_helper.dart';
 import 'package:chat_app/shared/style/colors.dart';
-import 'package:chat_app/views/profile/profile_page.dart';
+import 'package:chat_app/views/user/createAccount/enter_phone_screen.dart';
+import 'package:chat_app/views/user/createAccount/enter_user_data_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -36,12 +37,11 @@ class HomeLayout extends StatelessWidget {
                 if (cubit.currentIndex == homeIndex)
                   Row(
                     children: [
-
                       IconButton(
                         icon: const Icon(Icons.search),
                         onPressed: () {},
                       ),
-                      InkWell(
+                      /*InkWell(
                         onTap: () {
                           navigatorTo(
                               context: context, page: const ProfilePage());
@@ -50,7 +50,7 @@ class HomeLayout extends StatelessWidget {
                           radius: 14,
                           backgroundImage: NetworkImage("${cubit.user?.image}"),
                         ),
-                      ),
+                      ),*/
                     ],
                   ),
                 /*if (cubit.currentIndex == homeIndex)
@@ -64,7 +64,14 @@ class HomeLayout extends StatelessWidget {
                 if (cubit.currentIndex == 3)
                   IconButton(
                     icon: const Icon(Icons.settings),
-                    onPressed: () {},
+                    onPressed: () {
+                      CacheHelper.clearData(key: 'id').then(
+                        (value) {
+                          toastMessage(message: value.toString());
+                          navigatorTo(context: context, page: const EnterUserDataScreen());
+                        },
+                      );
+                    },
                   ),
               ],
             ),

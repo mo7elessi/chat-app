@@ -73,6 +73,7 @@ Widget primaryButton({
   required String text,
   Color color = primaryColor,
   double height = 55,
+  double width = double.infinity,
 }) {
   return  Container(
       height: height,
@@ -86,7 +87,7 @@ Widget primaryButton({
           child: Text(text.toUpperCase(),
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 14.0,
+                fontSize: 12.0,
                 fontWeight: FontWeight.bold,
               )),
         ),
@@ -106,7 +107,7 @@ Widget secondaryButton({
         child: Text(text.toUpperCase(),
             style: TextStyle(
               color: color,
-              fontSize: 14.0,
+              fontSize: 12.0,
               fontWeight: FontWeight.bold,
             )),
         style: ButtonStyle(

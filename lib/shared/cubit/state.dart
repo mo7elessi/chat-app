@@ -49,6 +49,14 @@ class CreateGroupSuccess extends ChatStates {}
 
 class CreateGroupError extends ChatStates {}
 
+//get contacts state
+class GetContactsLoading extends ChatStates {}
+
+class GetContactsSuccess extends ChatStates {}
+
+class GetContactsError extends ChatStates {}
+
+
 //send notification state
 class SendNotificationLoadingState extends ChatStates {}
 
@@ -69,3 +77,4 @@ class GetGroupsErrorState extends ChatStates {
 
   GetGroupsErrorState(this.error);
 }
+

@@ -1,11 +1,14 @@
 import 'package:chat_app/model/user_model.dart';
 import 'package:chat_app/shared/components/constance.dart';
-import 'package:chat_app/shared/components/main_components.dart';
+import 'package:chat_app/shared/components/shared_components.dart';
 import 'package:chat_app/shared/cubit/cubit.dart';
 import 'package:chat_app/shared/style/colors.dart';
 import 'package:chat_app/views/chat/chat_details_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
+
+import '../../views/chat/video_audio_call.dart';
+import '../services/fcm_notifications_servicess.dart';
 
 Widget buildChatItem({
   required BuildContext context,
@@ -28,57 +31,59 @@ Widget buildChatItem({
     },
     onLongPress: () {
       scaffoldKey.currentState!.showBottomSheet(
-        (context) => Container(
-          color: Colors.white,
-          width: double.infinity,
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: double.infinity,
-                child: TextButton(
-                  style: const ButtonStyle(
-                      alignment: AlignmentDirectional.bottomStart),
-                  child: const Text(
-                    'Delete Chat',
-                    style: TextStyle(color: Colors.black87, fontSize: 16),
+            (context) =>
+            Container(
+              color: Colors.white,
+              width: double.infinity,
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
+                      style: const ButtonStyle(
+                          alignment: AlignmentDirectional.bottomStart),
+                      child: const Text(
+                        'Delete Chat',
+                        style: TextStyle(color: Colors.black87, fontSize: 14),
+                      ),
+                      onPressed: () {
+                        ChatCubit.get(context).deleteChat(
+                          receiverId: model.id.toString(),
+                        );
+                      },
+                    ),
                   ),
-                  onPressed: () {
-                    ChatCubit.get(context).deleteChat(
-                      receiverId: model.id.toString(),
-                    );
-                  },
-                ),
-              ),
-              SizedBox(
-                width: double.infinity,
-                child: TextButton(
-                  style: const ButtonStyle(
-                      alignment: AlignmentDirectional.bottomStart),
-                  child: const Text(
-                    'Block User',
-                    style: TextStyle(color: Colors.black87, fontSize: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
+                      style: const ButtonStyle(
+                          alignment: AlignmentDirectional.bottomStart),
+                      child: const Text(
+                        'Block User',
+                        style: TextStyle(color: Colors.black87, fontSize: 14),
+                      ),
+                      onPressed: () {},
+                    ),
                   ),
-                  onPressed: () {},
-                ),
-              ),
-              SizedBox(
-                width: double.infinity,
-                child: TextButton(
-                  style: const ButtonStyle(
-                      alignment: AlignmentDirectional.bottomStart),
-                  child: Text(
-                    'Create Group with ${model.username}',
-                    style: const TextStyle(color: Colors.black87, fontSize: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
+                      style: const ButtonStyle(
+                          alignment: AlignmentDirectional.bottomStart),
+                      child: Text(
+                        'Create Group with ${model.username}',
+                        style: const TextStyle(
+                            color: Colors.black87, fontSize: 14),
+                      ),
+                      onPressed: () {},
+                    ),
                   ),
-                  onPressed: () {},
-                ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
         clipBehavior: Clip.hardEdge,
         elevation: 4.0,
       );
@@ -97,7 +102,8 @@ Widget buildChatItem({
                           model.image ?? "assets/images/logoChat.png"),
                       maxRadius: 30,
                     ),
-                    if (ChatCubit.get(context)
+                    if (ChatCubit
+                        .get(context)
                         .listUserActive
                         .contains(model.id))
                       Positioned(
@@ -111,7 +117,9 @@ Widget buildChatItem({
                             shape: BoxShape.circle,
                             border: Border.all(
                                 color:
-                                    Theme.of(context).scaffoldBackgroundColor,
+                                Theme
+                                    .of(context)
+                                    .scaffoldBackgroundColor,
                                 width: 3),
                           ),
                         ),
@@ -136,25 +144,29 @@ Widget buildChatItem({
                                   fontWeight: FontWeight.bold),
                             ),
                             const Spacer(),
+                            if(model.lastMessage != null)
+                              Text(
+                                ChatCubit.get(context).readTimestamp(
+                                    model.timeLastMessage!.seconds),
+                                style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.grey.shade600,
+                                    overflow: TextOverflow.ellipsis),
+                              ),
+                          ],
+                        ),
+                       if (model.lastMessage != null)
+                          Column(children: [
+                            const SizedBox(height: 10),
                             Text(
-                              ChatCubit.get(context).readTimestamp(
-                                  model.timeLastMessage?.seconds),
+                              "${model.lastMessage}",
                               style: TextStyle(
-                                  fontSize: 10,
+                                  fontSize: 13,
                                   color: Colors.grey.shade600,
                                   overflow: TextOverflow.ellipsis),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        if (model.lastMessage != null)
-                          Text(
-                            "${model.lastMessage}",
-                            style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey.shade600,
-                                overflow: TextOverflow.ellipsis),
-                          ),
+                          ],),
+
                       ],
                     ),
                   ),
@@ -230,6 +242,13 @@ AppBar chatDetailsAppBar({
               icon: const Icon(Icons.phone),
               color: Colors.white,
             ),
+            IconButton(
+              onPressed: () {
+                navigatorTo(context: context, page: const VideoAudioCallScreen());
+              },
+              icon: const Icon(Icons.video_call),
+              color: Colors.white,
+            ),
           ],
         ),
       ),
@@ -241,77 +260,22 @@ Widget buildSenderMessage({
   required ChatCubit cubit,
   required BuildContext context,
   required int index,
-  required String receiverId,
-  required String messageId,
-  required GlobalKey<ScaffoldState> scaffoldKey,
 }) {
   return Align(
     alignment: AlignmentDirectional.centerStart,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        InkWell(
-          onLongPress: () {
-            scaffoldKey.currentState!.showBottomSheet(
-              (context) => Container(
-                color: Colors.white,
-                width: double.infinity,
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      child: TextButton(
-                        style: const ButtonStyle(
-                            alignment: AlignmentDirectional.bottomStart),
-                        child: const Text(
-                          'Delete Message',
-                          style: TextStyle(color: Colors.black87, fontSize: 16),
-                        ),
-                        onPressed: () {
-                          ChatCubit.get(context).deleteMessage(
-                            receiverId: receiverId,
-                            messageId: messageId,
-                          );
-                        },
-                      ),
-                    ),
-                    SizedBox(
-                      width: double.infinity,
-                      child: TextButton(
-                        style: const ButtonStyle(
-                            alignment: AlignmentDirectional.bottomStart),
-                        child: const Text(
-                          'Cancel Sending',
-                          style: TextStyle(color: Colors.black87, fontSize: 16),
-                        ),
-                        onPressed: () {
-                          ChatCubit.get(context).deleteMessage(
-                              receiverId: receiverId,
-                              messageId: messageId,
-                              status: "deleteForAll");
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              clipBehavior: Clip.hardEdge,
-              elevation: 4.0,
-            );
-          },
-          child: Container(
-            padding: const EdgeInsets.all(14),
-            margin: const EdgeInsets.only(left: 10, top: 5, right: 50),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              borderRadius: const BorderRadius.all(Radius.circular(20)),
-            ),
-            child: Text("${cubit.messages[index].message}"),
+        Container(
+          padding: const EdgeInsets.all(14),
+          margin: const EdgeInsets.only(left: 10, top: 5, right: 50),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade200,
+            borderRadius: const BorderRadius.all(Radius.circular(20)),
           ),
+          child: Text("${cubit.messages[index].message}"),
         ),
+
         Container(
           margin: const EdgeInsets.only(top: 5, left: 10),
           child: Text(
@@ -328,24 +292,84 @@ Widget buildReceiverMessage({
   required ChatCubit cubit,
   required BuildContext context,
   required int index,
+  required String receiverId,
+  required String messageId,
+  required GlobalKey<ScaffoldState> scaffoldKey,
 }) {
   return Align(
     alignment: AlignmentDirectional.centerEnd,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Container(
-          padding: const EdgeInsets.all(14),
-          margin: const EdgeInsets.only(left: 50, top: 5, right: 10),
-          decoration: const BoxDecoration(
-            color: primaryColor,
-            borderRadius: BorderRadius.all(Radius.circular(20)),
-          ),
-          child: Text(
-            "${cubit.messages[index].message}",
-            style: const TextStyle(color: Colors.white),
+        InkWell(
+          onLongPress: () {
+            scaffoldKey.currentState!.showBottomSheet(
+                  (context) =>
+                  Container(
+                    color: Colors.white,
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          child: TextButton(
+                            style: const ButtonStyle(
+                                alignment: AlignmentDirectional.bottomStart),
+                            child: const Text(
+                              'Delete Message',
+                              style: TextStyle(
+                                  color: Colors.black87, fontSize: 16),
+                            ),
+                            onPressed: () {
+                              ChatCubit.get(context).deleteMessage(
+                                receiverId: receiverId,
+                                messageId: messageId,
+                              );
+                            },
+                          ),
+                        ),
+                        SizedBox(
+                          width: double.infinity,
+                          child: TextButton(
+                            style: const ButtonStyle(
+                                alignment: AlignmentDirectional.bottomStart),
+                            child: const Text(
+                              'Cancel Sending',
+                              style: TextStyle(
+                                  color: Colors.black87, fontSize: 16),
+                            ),
+                            onPressed: () {
+                              ChatCubit.get(context).deleteMessage(
+                                  receiverId: receiverId,
+                                  messageId: messageId,
+                                  status: "deleteForAll");
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              clipBehavior: Clip.hardEdge,
+              elevation: 4.0,
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            margin: const EdgeInsets.only(left: 50, top: 5, right: 10),
+            decoration: const BoxDecoration(
+              color: primaryColor,
+              borderRadius: BorderRadius.all(Radius.circular(20)),
+            ),
+            child: Text(
+              "${cubit.messages[index].message}",
+              style: const TextStyle(color: Colors.white),
+            ),
           ),
         ),
+
         Container(
           margin: const EdgeInsets.only(top: 5, right: 10),
           child: Text(
@@ -400,23 +424,31 @@ Widget buildInputMessage({
             child: TextFormField(
               controller: messageController,
               decoration: const InputDecoration(
-                  hintText: "Type message here...",
-                  hintStyle: TextStyle(color: Colors.black54),
-                  border: InputBorder.none),
+                enabledBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                isDense: true,
+                focusedBorder: InputBorder.none,
+                hintText: "Type message here...",
+                hintStyle: TextStyle(color: Colors.black54),
+                border: InputBorder.none,
+              ),
               onChanged: (value) {},
             ),
           ),
           spaceBetween(),
           GestureDetector(
             onTap: () {
-              if (messageController.text == '') {
-              } else {
+              if (messageController.text == '') {} else {
                 cubit.sendMessage(
                     receiverId: receiverId,
                     messageId: const Uuid().v4(),
                     message: messageController.text);
 
-                cubit.sendNotification(
+                // cubit.sendNotification(
+                //     token: token,
+                //     title: username,
+                //     body: messageController.text);
+                FCMNotificationServices().sendNotificationToUser(
                     token: token,
                     title: username,
                     body: messageController.text);

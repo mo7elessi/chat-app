@@ -1,6 +1,5 @@
 import 'package:chat_app/layout/main_layout.dart';
 import 'package:chat_app/shared/components/chat_components.dart';
-import 'package:chat_app/shared/components/main_components.dart';
 import 'package:chat_app/shared/cubit/cubit.dart';
 import 'package:chat_app/shared/cubit/state.dart';
 import 'package:conditional_builder/conditional_builder.dart';
@@ -26,13 +25,14 @@ class HomePage extends StatelessWidget {
             return ListView.builder(
               itemCount: cubit.users.length,
               shrinkWrap: true,
-                physics: const BouncingScrollPhysics(),
+              physics: const BouncingScrollPhysics(),
               itemBuilder: (context, index) {
                 return buildChatItem(
-                    model: cubit.users[index],
-                    scaffoldKey: HomeLayout.scaffoldKey,
-                    context: context,
-                    index: index);
+                  model: cubit.users[index],
+                  scaffoldKey: HomeLayout.scaffoldKey,
+                  context: context,
+                  index: index,
+                );
               },
             );
           },

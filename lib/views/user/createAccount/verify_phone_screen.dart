@@ -1,6 +1,6 @@
 import 'package:chat_app/layout/main_layout.dart';
 import 'package:chat_app/shared/components/constance.dart';
-import 'package:chat_app/shared/components/main_components.dart';
+import 'package:chat_app/shared/components/shared_components.dart';
 import 'package:chat_app/shared/style/colors.dart';
 import 'package:chat_app/views/user/cubit/cubit.dart';
 import 'package:chat_app/views/user/cubit/state.dart';
@@ -9,29 +9,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:chat_app/shared/components/user_components.dart';
 
-class VerifyPhoneScreen extends StatelessWidget {
-  String phoneNumber;
-  String username;
+import '../../../shared/Network/local/cache_helper.dart';
 
-  VerifyPhoneScreen({
-    Key? key,
-    required this.phoneNumber,
-    required this.username,
-  }) : super(key: key);
+class VerifyPhoneScreen extends StatelessWidget {
+  const VerifyPhoneScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     var otpController = TextEditingController();
     var formKey = GlobalKey<FormState>();
+    UserCubit cubit = UserCubit.get(context);
+
     return BlocConsumer<UserCubit, UserStates>(
       listener: (context, state) {
         if (state is VerifyOTPSuccessState) {
+          CacheHelper.saveData(key: 'id', value: cubit.userId);
           navigatorTo(context: context, page: const HomeLayout());
+        }
+        if (cubit.sent == true||state is CodeSentState) {
+          cubit.startTimer();
         }
       },
       builder: (context, state) {
-        UserCubit cubit = UserCubit.get(context);
-
         return Scaffold(
           appBar: userAppBar(),
           body: Padding(
@@ -45,14 +44,19 @@ class VerifyPhoneScreen extends StatelessWidget {
                     alignment: AlignmentDirectional.centerStart,
                     child: Text.rich(
                       TextSpan(
-                          style: const TextStyle(height: 1.4, fontSize: 14),
+                          style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.black54,
+                              fontWeight: FontWeight.bold),
                           text:
                               'A 6-digit message has been sent to the number ',
                           children: <InlineSpan>[
                             TextSpan(
-                              text: phoneNumber,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
+                              text: cubit.phoneNumber,
+                              style: const TextStyle(
+                                  fontSize: 16,
+                                  color: primaryColor,
+                                  fontWeight: FontWeight.bold),
                             ),
                           ]),
                     ),
@@ -69,8 +73,9 @@ class VerifyPhoneScreen extends StatelessWidget {
                               if (otpController.text.length == 6) {
                                 cubit.verifyOTP(
                                     smsCode: otpController.text,
-                                    phoneNumber: phoneNumber,
-                                    username: username,
+                                    phoneNumber: cubit.phoneNumber,
+                                    username:
+                                        cubit.username ?? cubit.phoneNumber,
                                     context: context);
                               }
                             }),
@@ -92,26 +97,58 @@ class VerifyPhoneScreen extends StatelessWidget {
                           spaceBetween(size: 12),
                           const Text(
                               'I haven\'t received a resend message yet '),
-                          TextButton(
-                            onPressed: () {
-                              cubit.loginWithPhone(phoneNumber: cubit.phoneNumber);
-                              cubit.startTimer();
+                          spaceBetween(size: 10),
+                          ConditionalBuilder(
+                            condition: state is! VerifyPhoneNumberLoadingState,
+                            builder: (context) {
+                              return TextButton(
+                                onPressed: () {
+                                  cubit.loginWithPhone(
+                                      phoneNumber: cubit.phoneNumber);
+                                },
+                                child: Text(
+                                  cubit.start > 0
+                                      ? "${cubit.start}"
+                                      : "Re-send code",
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: primaryColor),
+                                ),
+                              );
                             },
-                            child: Text(
-                              cubit.start > 0
-                                  ? "${cubit.start}"
-                                  : "Resend code",
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: primaryColor),
-                            ),
+                            fallback: (context) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            },
                           ),
-                          spaceBetween(size: 12),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            child: const Text("Change Phone Number"),
+                          spaceBetween(size: 24),
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 1,
+                                child: secondaryButton(
+                                  text: "Previous",
+                                  function: () {
+                                    cubit.sent = false;
+                                    cubit.start = 0;
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                              ),
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              Expanded(
+                                flex: 1,
+                                child: primaryButton(
+                                  text: 'Change phone',
+                                  function: () {
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       );

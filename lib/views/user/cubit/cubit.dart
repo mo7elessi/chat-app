@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:chat_app/model/user_model.dart';
 import 'package:chat_app/shared/Network/local/cache_helper.dart';
-import 'package:chat_app/shared/components/main_components.dart';
+import 'package:chat_app/shared/components/shared_components.dart';
 import 'package:chat_app/shared/components/constance.dart';
 import 'package:chat_app/views/user/cubit/state.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -19,10 +19,12 @@ class UserCubit extends Cubit<UserStates> {
 
   //firebase
   final FirebaseAuth auth = FirebaseAuth.instance;
-  FirebaseFirestore store = FirebaseFirestore.instance;
-
-  firebase_storage.FirebaseStorage storage =
+ final FirebaseFirestore store = FirebaseFirestore.instance;
+  final firebase_storage.FirebaseStorage storage =
       firebase_storage.FirebaseStorage.instance;
+
+  String? username;
+  File? userImage;
 
   void createUser({
     required String id,
@@ -74,7 +76,6 @@ class UserCubit extends Cubit<UserStates> {
     });
   }
 
-  File? userImage;
   var pickImage = ImagePicker();
 
   Future<void> pickProfileImage() async {
@@ -119,10 +120,16 @@ class UserCubit extends Cubit<UserStates> {
       emit(UploadImageProfileErrorState(error: onError));
     });
   }
-
-  bool otpVisibility = true;
+  void setStatusUser({required bool userActive}) {
+    store
+        .collection("users")
+        .doc(auth.currentUser!.uid)
+        .update({"userActive": userActive}).then((value) {});
+  }
+  bool sent = false;
   String verificationID = "1212";
   String phoneNumber = "";
+
   void loginWithPhone({required String phoneNumber}) async {
     emit(VerifyPhoneNumberLoadingState());
     auth.verifyPhoneNumber(
@@ -135,7 +142,7 @@ class UserCubit extends Cubit<UserStates> {
         emit(VerificationFailedState(e.message.toString()));
       },
       codeSent: (String verificationId, int? resendToken) {
-        otpVisibility = false;
+        sent = true;
         verificationID = verificationId;
         emit(CodeSentState());
       },
@@ -155,7 +162,7 @@ class UserCubit extends Cubit<UserStates> {
       emit(LoginErrorState("error"));
     });
   }
-
+  String? userId;
   void verifyOTP({
     required String smsCode,
     required String username,
@@ -167,13 +174,13 @@ class UserCubit extends Cubit<UserStates> {
       verificationId: verificationID,
       smsCode: smsCode,
     );
-   toastMessage(message: credential.smsCode.toString());
+    toastMessage(message: credential.smsCode.toString());
     await auth.signInWithCredential(credential).then((value) {
-      var userId = value.user!.uid;
+       userId = value.user!.uid;
       createNewUser(
         phoneNumber: phoneNumber,
         username: username,
-        id: userId,
+        id: userId!,
       );
       emit(VerifyOTPSuccessState());
     }).catchError((onError) {

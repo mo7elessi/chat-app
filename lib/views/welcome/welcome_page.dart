@@ -1,9 +1,9 @@
 import 'package:chat_app/shared/components/constance.dart';
-import 'package:chat_app/shared/components/main_components.dart';
-import 'package:chat_app/shared/style/colors.dart';
-import 'package:chat_app/views/home/home_page.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:chat_app/shared/components/shared_components.dart';
+import 'package:chat_app/views/user/createAccount/enter_user_data_screen.dart';
 import 'package:flutter/material.dart';
+import '../../shared/Network/local/cache_helper.dart';
+import '../../shared/components/user_components.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({Key? key}) : super(key: key);
@@ -11,8 +11,8 @@ class WelcomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Column(
+      appBar: userAppBar(),
+      body: Column(
           children: [
             const Spacer(flex: 2),
             Image.asset("assets/images/welcome_image.png"),
@@ -31,14 +31,14 @@ class WelcomePage extends StatelessWidget {
               child: Column(
                 children: [
                   primaryButton(function: () {
-                    navigatorTo(context: context, page: HomePage());
+                    CacheHelper.saveData(key: 'welcome', value: true);
+                    navigatorTo(context: context, page: const EnterUserDataScreen());
                   }, text: "NEXT"),
                 ],
               ),
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 }

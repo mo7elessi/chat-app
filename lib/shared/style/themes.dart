@@ -7,7 +7,7 @@ OutlineInputBorder outlineInputBorder = OutlineInputBorder(
 );
 
 ThemeData theme = ThemeData(
-  fontFamily: 'Tajawal',
+  fontFamily: '',
   scaffoldBackgroundColor: backgroundColor,
   inputDecorationTheme: InputDecorationTheme(
     hoverColor: primaryColor,

@@ -2,6 +2,7 @@ import 'package:chat_app/model/group_model.dart';
 import 'package:chat_app/model/message_model.dart';
 import 'package:chat_app/model/user_model.dart';
 import 'package:chat_app/shared/components/constance.dart';
+import 'package:chat_app/shared/components/shared_components.dart';
 import 'package:chat_app/shared/cubit/state.dart';
 import 'package:chat_app/shared/network/remote/dio_helper.dart';
 import 'package:chat_app/views/home/home_page.dart';
@@ -11,6 +12,7 @@ import 'package:chat_app/views/users/users.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
@@ -37,7 +39,7 @@ class ChatCubit extends Cubit<ChatStates> {
 
   int currentIndex = 0;
 
-  List<String> appBarTitle = ['Chats', 'Users', 'Online User', 'Contacta'];
+  List<String> appBarTitle = ['Chats', 'Users', 'Online User', 'Profile'];
 
   List<BottomNavigationBarItem> navBarsItems = const [
     BottomNavigationBarItem(
@@ -54,7 +56,7 @@ class ChatCubit extends Cubit<ChatStates> {
     ),
     BottomNavigationBarItem(
       icon: Icon(Icons.contacts_rounded),
-      label: "Contacts",
+      label: "Profile",
     ),
   ];
 
@@ -73,7 +75,7 @@ class ChatCubit extends Cubit<ChatStates> {
   //get current user data func
   void getUserData() {
     emit(GetUserDataLoading());
-    store.collection('users').doc(userId).get().then((value) {
+    store.collection('users').doc(auth.currentUser!.uid).get().then((value) {
       user = UserModel.fromJson(value.data());
       emit(GetUserDataSuccess());
     }).catchError(
@@ -173,7 +175,7 @@ class ChatCubit extends Cubit<ChatStates> {
   }) async {
     var doc = await store
         .collection('users')
-        .doc(userId)
+        .doc(user!.id)
         .collection('chats')
         .doc(receiverId)
         .collection("messages")
@@ -186,7 +188,7 @@ class ChatCubit extends Cubit<ChatStates> {
           .collection('users')
           .doc(receiverId)
           .collection('chats')
-          .doc(userId)
+          .doc(user!.id)
           .collection("messages")
           .limit(1)
           .where("messageId", isEqualTo: messageId)
@@ -207,11 +209,11 @@ class ChatCubit extends Cubit<ChatStates> {
       groupName: groupName,
       groupId: groupId,
       usersInGroup: listOfUsers,
-      adminId: userId,
+      adminId: user!.id,
     );
     FirebaseFirestore.instance
         .collection('users')
-        .doc(userId)
+        .doc(user!.id)
         .collection('groups')
         .add(model.toMap())
         .then((value) {
@@ -248,7 +250,7 @@ class ChatCubit extends Cubit<ChatStates> {
   void getUsersInGroup() {
     store
         .collection("users")
-        .doc(userId)
+        .doc(user!.id)
         .collection("groups")
         .where("groupId", isEqualTo: "6ea9a6a3-e0b0-4a5d-9004-d402d6bf1e5b")
         .get()
@@ -266,7 +268,7 @@ class ChatCubit extends Cubit<ChatStates> {
   void deleteUserFromGroup() {
     store
         .collection("users")
-        .doc(userId)
+        .doc(user!.id)
         .collection("groups")
         .where("groupId", isEqualTo: "515eae02-b9ae-4c20-9519-24065d4b6f15")
         .get()
@@ -308,12 +310,16 @@ class ChatCubit extends Cubit<ChatStates> {
 
   List<Contact> contacts = [];
 
-  void getContacts() async {
-    List<Contact> _contacts =
-        await ContactsService.getContacts(withThumbnails: true);
-    for (var element in _contacts) {
-      contacts.add(element);
-    }
+  void getContacts() {
+    emit(GetContactsLoading());
+    ContactsService.getContacts().then((List<Contact> value) {
+      for (var element in value) {
+        contacts.add(element);
+      }
+      emit(GetContactsSuccess());
+    }).catchError((onError) {
+      emit(GetContactsError());
+    });
   }
 
 // list to add user active
@@ -332,15 +338,16 @@ class ChatCubit extends Cubit<ChatStates> {
         listUserActive = [];
         usersActiveModel = [];
         for (var element in event.docs) {
-          for (var contact in contacts) {
-            for (var phone in contact.phones!) {
-              if (phone.value == element.data()['phone']) {
-                usersActiveModel.add(UserModel.fromJson(element.data()));
-                listUserActive.add(element.id);
-              }
-            }
+          // for (var contact in contacts) {
+          //   for (var phone in contact.phones!) {
+          if (/*phone.value == element.data()['phone'] &&*/
+              listUserActive.contains(element.id) == false) {
+            usersActiveModel.add(UserModel.fromJson(element.data()));
+            listUserActive.add(element.id);
           }
         }
+        //   }
+        // }
         emit(GetActiveUsersSuccess());
       },
     );
@@ -348,86 +355,38 @@ class ChatCubit extends Cubit<ChatStates> {
 
   void getUsers() {
     emit(GetUsersLoading());
-    store.collection('users').get().then(
-      (value) {
-        for (var element in value.docs) {
-          store
-              .collection('users')
-              .doc(userId)
-              .collection('chats')
-              .doc(element.data()['id'])
-              .collection('messages')
-              .orderBy('dateTime', descending: true)
-              .snapshots()
-              .listen(
-            (value) {
-              for (var contact in contacts) {
-                for (var phone in contact.phones!) {
-                  UserModel userModel = UserModel(
-                    token: element.data()['token'],
-                    id: element.data()['id'],
-                    username: element.data()['username'],
-                    phone: element.data()['phone'],
-                    image: element.data()['image'],
-                    lastMessage: value.docs.isNotEmpty
-                        ? value.docs.first.data()["message"]
-                        : phone.value,
-                   timeLastMessage: value.docs.first.data()["dateTime"] ?? Timestamp.now(),
-                  );
-                  if (phone.value == element.data()['phone']) {
-                    allUsers.add(userModel);
-                  }
-                  if (phone.value == element.data()['phone'] &&
-                      value.docs.first.data()["message"].isNotEmpty) {
-                    users.add(userModel);
-                  }
-                }
-              }
-              emit(GetUsersSuccess());
-            },
+    store.collection('users').get().then((value) {
+      for (var element in value.docs) {
+        store
+            .collection('users')
+            .doc(user!.id)
+            .collection('chats')
+            .doc(element.data()['id'])
+            .collection('messages')
+            .orderBy('dateTime', descending: true)
+            .snapshots()
+            .listen((value) {
+          UserModel userModel = UserModel(
+            token: element.data()['token'],
+            id: element.data()['id'],
+            username: element.data()['username'],
+            phone: element.data()['phone'],
+            image: element.data()['image'],
+            lastMessage: value.docs.first.data()["message"],
+            timeLastMessage: value.docs.first.data()["dateTime"],
           );
-        }
-      },
-    ).catchError(
+          if (value.docs.first.data()["message"].isNotEmpty) {
+            users.add(userModel);
+          }
+        });
+      }
+      emit(GetUsersSuccess());
+
+    }).catchError(
       (onError) {
         emit(GetUsersError(onError.toString()));
       },
     );
-  }
-
-  void sendNotification({
-    required String token,
-    required String title,
-    required String body,
-  }) {
-    emit(SendNotificationLoadingState());
-    DioHelper.postNotification(data: {
-      "to": token,
-      "notification": {
-        "title": title,
-        "body": body,
-        "sound": "default",
-      },
-      "android": {
-        "priority": "HIGH",
-        "notification": {
-          "notification_priority": "PRIORITY_MAX",
-          "sound": "default",
-          "default_sound": true,
-          "default_vibrate_timings": true,
-          "default_light_settings": true
-        }
-      },
-      "data": {
-        "type": "order",
-        "id": "87",
-        "click_action": "FLUTTER_NOTIFICATION_CLICK"
-      }
-    }).then((value) {
-      emit(SendNotificationSuccessState());
-    }).catchError((onError) {
-      emit(SendNotificationErrorState());
-    });
   }
 
   String readTimestamp(int? timestamp) {
@@ -437,7 +396,6 @@ class ChatCubit extends Cubit<ChatStates> {
       var date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
       var diff = now.difference(date);
       var time = '';
-
       if (diff.inSeconds <= 0 ||
           diff.inSeconds > 0 && diff.inMinutes == 0 ||
           diff.inMinutes > 0 && diff.inHours == 0 ||

@@ -1,5 +1,5 @@
 import 'package:chat_app/shared/components/constance.dart';
-import 'package:chat_app/shared/components/main_components.dart';
+import 'package:chat_app/shared/components/shared_components.dart';
 import 'package:chat_app/shared/style/colors.dart';
 import 'package:chat_app/shared/validation/text_feild_validation.dart';
 import 'package:chat_app/views/user/createAccount/enter_phone_screen.dart';
@@ -24,8 +24,7 @@ class EnterUserDataScreen extends StatelessWidget {
     String registerField = "An error occurred during the registration process";
 
     return BlocConsumer<UserCubit, UserStates>(listener: (context, state) {
-      switch(state){
-
+      switch (state) {
       }
     }, builder: (context, state) {
       UserCubit cubit = UserCubit.get(context);
@@ -47,7 +46,8 @@ class EnterUserDataScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(100.0),
                           image: cubit.userImage == null
                               ? const DecorationImage(
-                                  image: AssetImage("assets/images/defaultImageProfile.jpg"),
+                                  image: AssetImage(
+                                      "assets/images/defaultImageProfile.jpg"),
                                   fit: BoxFit.cover,
                                 )
                               : DecorationImage(
@@ -91,15 +91,14 @@ class EnterUserDataScreen extends StatelessWidget {
                     ),
                   ),
                   spaceBetween(size: 24),
+
                   primaryButton(
                     text: 'Next',
                     function: () {
                       if (formKey.currentState!.validate()) {
+                        cubit.username = usernameController.text;
                         navigatorTo(
-                            page: EnterPhoneScreen(
-                              username: usernameController.text,
-                            ),
-                            context: context);
+                            page: const EnterPhoneScreen(), context: context);
                       }
                     },
                   ),

@@ -10,7 +10,7 @@ class UserModel {
   String? image;
   bool? isEmailVerified = true;
   String? lastMessage;
-  Timestamp? timeLastMessage;
+  Timestamp? timeLastMessage ;
   bool? userActive;
 
   UserModel({

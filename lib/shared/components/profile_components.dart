@@ -1,5 +1,5 @@
 
-import 'package:chat_app/shared/components/main_components.dart';
+import 'package:chat_app/shared/components/shared_components.dart';
 import 'package:flutter/material.dart';
 
 Widget userData({
@@ -28,7 +28,7 @@ Widget userData({
           ],
         ),
         const Spacer(),
-        TextButton(onPressed: () {}, child: Text(textButton)),
+        TextButton(onPressed: () {}, child: Text(textButton,style: const TextStyle(fontSize: 12),)),
       ],
   );
 }

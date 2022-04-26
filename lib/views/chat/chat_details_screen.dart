@@ -1,4 +1,4 @@
-import 'package:chat_app/shared/components/main_components.dart';
+import 'package:chat_app/shared/components/shared_components.dart';
 import 'package:chat_app/shared/cubit/cubit.dart';
 import 'package:chat_app/shared/cubit/state.dart';
 import 'package:flutter/material.dart';
@@ -43,29 +43,23 @@ class ChatDetailsPage extends StatelessWidget {
               ),
               body: Column(
                 children: <Widget>[
-                  if (cubit.messages.isEmpty)
-                    Column(
-                      children: [
-                        CircleAvatar(
-                          backgroundImage: NetworkImage(userImage),
-                          maxRadius: 50,
-                        ),
-                        spaceBetween(),
-                        Text(
-                          username,
-                          style: const TextStyle(
-                              color: Colors.black87,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18),
-                        ),
-                        spaceBetween(),
-                        Text(
-                          bio ?? "",
-                          style: const TextStyle(
-                              color: Colors.black87, fontSize: 12),
-                        ),
-                      ],
-                    ),
+                 // // if (cubit.messages.isEmpty)
+                 //  Column(
+                 //      children: [
+                 //        CircleAvatar(
+                 //          backgroundImage: NetworkImage(userImage),
+                 //          maxRadius: 50,
+                 //        ),
+                 //        spaceBetween(),
+                 //
+                 //        spaceBetween(),
+                 //        Text(
+                 //          bio ?? "",
+                 //          style: const TextStyle(
+                 //              color: Colors.black87, fontSize: 12),
+                 //        ),
+                 //      ],
+                 //    ),
                   Expanded(
                     flex: 100,
                     child: ListView.builder(
@@ -80,10 +74,11 @@ class ChatDetailsPage extends StatelessWidget {
                               cubit: cubit,
                               context: context,
                               index: index,
-                              scaffoldKey: scaffoldKey, receiverId: receiverId,
-                              messageId: cubit.messages[index].messageId.toString());
+                             );
                         }
                         return buildReceiverMessage(
+                            scaffoldKey: scaffoldKey, receiverId: receiverId,
+                            messageId: cubit.messages[index].messageId.toString(),
                             cubit: cubit, context: context, index: index);
                       },
                     ),

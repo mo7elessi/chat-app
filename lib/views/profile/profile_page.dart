@@ -1,4 +1,4 @@
-import 'package:chat_app/shared/components/main_components.dart';
+import 'package:chat_app/shared/components/shared_components.dart';
 import 'package:chat_app/shared/components/profile_components.dart';
 import 'package:chat_app/shared/cubit/cubit.dart';
 import 'package:chat_app/shared/cubit/state.dart';
@@ -11,11 +11,7 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var usernameController = TextEditingController();
-    var bioController = TextEditingController();
-    var phoneController = TextEditingController();
     ChatCubit cubit = ChatCubit.get(context);
-
     return BlocConsumer<ChatCubit, ChatStates>(
       listener: (context, state) {},
       builder: (context, state) {
@@ -24,12 +20,12 @@ class ProfilePage extends StatelessWidget {
           child: Column(
             children: [
               Stack(
-                children: const [
+                children:  [
                   CircleAvatar(
-                    backgroundImage: AssetImage("assets/images/user_2.png"),
+                    backgroundImage: NetworkImage(cubit.user?.image.toString() ?? ""),
                     maxRadius: 80,
                   ),
-                  Positioned(
+                  const Positioned(
                     right: 0,
                     bottom: 0,
                     child: CircleAvatar(

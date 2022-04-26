@@ -1,22 +1,24 @@
 import 'package:animated_splash_screen/animated_splash_screen.dart';
 import 'package:bloc/bloc.dart';
 import 'package:chat_app/layout/main_layout.dart';
-import 'package:chat_app/shared/components/main_components.dart';
+import 'package:chat_app/shared/components/shared_components.dart';
 import 'package:chat_app/shared/components/constance.dart';
 import 'package:chat_app/shared/cubit/bloc_observe.dart';
 import 'package:chat_app/shared/cubit/cubit.dart';
 import 'package:chat_app/shared/Network/local/cache_helper.dart';
 import 'package:chat_app/shared/network/remote/dio_helper.dart';
-import 'package:chat_app/shared/style/colors.dart';
 import 'package:chat_app/shared/style/themes.dart';
 import 'package:chat_app/views/user/createAccount/enter_user_data_screen.dart';
 import 'package:chat_app/views/user/cubit/cubit.dart';
 import 'package:chat_app/views/user/cubit/state.dart';
 import 'package:chat_app/views/welcome/splash_page.dart';
+import 'package:chat_app/views/welcome/welcome_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'shared/services/permissions.dart';
 
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   switch (message) {
@@ -35,6 +37,7 @@ void main() async {
   //firebase messaging
   FirebaseMessaging.instance.getToken().then((value) {
     token = value!;
+    print("token $value");
   });
   //اذا كان التطبيق مفتوح foreground
   FirebaseMessaging.onMessage.listen((event) {
@@ -48,12 +51,19 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
   userId = CacheHelper.getData(key: 'id');
-  page = userId != '' ? const HomeLayout() : const EnterUserDataScreen();
+  bool welcomeIsTrue = CacheHelper.getData(key: 'welcome');
+  if (welcomeIsTrue == false || welcomeIsTrue == null) {
+    page = const WelcomePage();
+  } else if (userId == null) {
+    page = const EnterUserDataScreen();
+  } else {
+    page = const HomeLayout();
+  }
 
   runApp(ChatApp(id: userId, startScreen: page!));
 }
 
-class ChatApp extends StatelessWidget {
+class ChatApp extends StatelessWidget with WidgetsBindingObserver {
   final String id;
   final Widget startScreen;
 
@@ -62,34 +72,35 @@ class ChatApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // _askPermissions(context: context,routeName: "");
+    Permissions().askPermissions("", context);
     return MultiBlocProvider(
       providers: [
         BlocProvider(
             create: (context) => ChatCubit()
               ..getContacts()
               ..getUsers()
-              ..getActiveUsers()
               ..getUserData()
+              ..getActiveUsers()
               ..getGroups()),
         BlocProvider(create: (context) => UserCubit()),
-
       ],
       child: BlocConsumer<UserCubit, UserStates>(
-        listener: (BuildContext context, Object? state) {},
-        builder: (BuildContext context, state) => MaterialApp(
+        listener: (BuildContext context, UserStates state) {},
+        builder: (BuildContext context, UserStates state) => MaterialApp(
           title: 'Chat App',
           theme: theme,
           debugShowCheckedModeBanner: false,
-          home:LayoutBuilder(builder: (BuildContext context, BoxConstraints constraints) {
-            return  AnimatedSplashScreen(
-              splash: const SplashPage(),
-              backgroundColor: primaryColor,
-              nextScreen: const EnterUserDataScreen(),
-              splashTransition: SplashTransition.scaleTransition,
-              animationDuration: const Duration(milliseconds: 500),
-            );
-          },),
+          home: LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints constraints) {
+              return AnimatedSplashScreen(
+                splash: const SplashPage(),
+                backgroundColor: Colors.white,
+                nextScreen: startScreen,
+                splashTransition: SplashTransition.scaleTransition,
+                animationDuration: const Duration(milliseconds: 500),
+              );
+            },
+          ),
         ),
       ),
     );
