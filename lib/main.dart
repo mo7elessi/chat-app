@@ -7,14 +7,19 @@ import 'package:chat_app/shared/cubit/bloc_observe.dart';
 import 'package:chat_app/shared/cubit/cubit.dart';
 import 'package:chat_app/shared/Network/local/cache_helper.dart';
 import 'package:chat_app/shared/network/remote/dio_helper.dart';
+import 'package:chat_app/shared/services/network_connected_manager.dart';
 import 'package:chat_app/shared/style/themes.dart';
+import 'package:chat_app/views/home/home_page.dart';
+import 'package:chat_app/views/profile/profile_page.dart';
 import 'package:chat_app/views/user/createAccount/enter_user_data_screen.dart';
 import 'package:chat_app/views/user/cubit/cubit.dart';
 import 'package:chat_app/views/user/cubit/state.dart';
 import 'package:chat_app/views/welcome/splash_page.dart';
 import 'package:chat_app/views/welcome/welcome_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -37,7 +42,10 @@ void main() async {
   //firebase messaging
   FirebaseMessaging.instance.getToken().then((value) {
     token = value!;
-    print("token $value");
+    FirebaseFirestore.instance
+        .collection("users")
+        .doc(userId)
+        .update({"token": value});
   });
   //اذا كان التطبيق مفتوح foreground
   FirebaseMessaging.onMessage.listen((event) {
@@ -45,7 +53,9 @@ void main() async {
   });
 
   //when click on notification
-  FirebaseMessaging.onMessageOpenedApp.listen((event) {});
+  FirebaseMessaging.onMessageOpenedApp.listen((event) {
+    toastMessage(message: event.notification!.title.toString());
+  });
 
   //background اذا كان التطبيق في الخلفية
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
@@ -77,32 +87,35 @@ class ChatApp extends StatelessWidget with WidgetsBindingObserver {
       providers: [
         BlocProvider(
             create: (context) => ChatCubit()
-              ..getContacts()
               ..getUsers()
               ..getUserData()
-              ..getActiveUsers()
-              ..getGroups()),
+              ..getActiveUsers()),
         BlocProvider(create: (context) => UserCubit()),
       ],
       child: BlocConsumer<UserCubit, UserStates>(
-        listener: (BuildContext context, UserStates state) {},
-        builder: (BuildContext context, UserStates state) => MaterialApp(
-          title: 'Chat App',
-          theme: theme,
-          debugShowCheckedModeBanner: false,
-          home: LayoutBuilder(
-            builder: (BuildContext context, BoxConstraints constraints) {
-              return AnimatedSplashScreen(
-                splash: const SplashPage(),
-                backgroundColor: Colors.white,
-                nextScreen: startScreen,
-                splashTransition: SplashTransition.scaleTransition,
-                animationDuration: const Duration(milliseconds: 500),
-              );
-            },
-          ),
-        ),
-      ),
+          listener: (BuildContext context, UserStates state) {},
+          builder: (BuildContext context, UserStates state) {
+            return MaterialApp(
+              title: 'Chat App',
+              theme: theme,
+              debugShowCheckedModeBanner: false,
+              home: LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints constraints) {
+                  return AnimatedSplashScreen(
+                    splash: const SplashPage(),
+                    backgroundColor: Colors.white,
+                    nextScreen: startScreen,
+                    splashTransition: SplashTransition.scaleTransition,
+                    animationDuration: const Duration(milliseconds: 500),
+                  );
+                },
+              ),
+              routes: {
+                "homePage": (_) => const HomePage(),
+                "profilePage": (_) => const ProfilePage(),
+              },
+            );
+          }),
     );
   }
 }

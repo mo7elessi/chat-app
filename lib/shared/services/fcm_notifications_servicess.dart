@@ -6,7 +6,6 @@ class FCMNotificationServices {
   final String endpoint = "https://fcm.googleapis.com/fcm/send";
   String authorization =
       "key=AAAAlbMnBMI:APA91bEzDYHksiUmHaWbXb-pg8fBJMf7VgQAtvnGq2-3gtrU4BZSgKJRXolRjyOHoy8srCbsjpKzMWRbW-PPFAf2_ko5KKM4teklZVDXxr3FZFKwVOtQpoBA_Q-c3XqpYdxSJnh3Jh-U";
-
   String contentType = 'application/json';
   FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
 
@@ -63,40 +62,5 @@ class FCMNotificationServices {
   Future<void> unsubscribeFromTopic({required String topic}) {
     return firebaseMessaging.unsubscribeFromTopic(topic);
   }
-  /*
-  *   void sendNotification({
-    required String token,
-    required String title,
-    required String body,
-  }) {
-    emit(SendNotificationLoadingState());
-    DioHelper.postNotification(data: {
-      "to": token,
-      "notification": {
-        "title": title,
-        "body": body,
-        "sound": "default",
-      },
-      "android": {
-        "priority": "HIGH",
-        "notification": {
-          "notification_priority": "PRIORITY_MAX",
-          "sound": "default",
-          "default_sound": true,
-          "default_vibrate_timings": true,
-          "default_light_settings": true
-        }
-      },
-      "data": {
-        "type": "order",
-        "id": "87",
-        "click_action": "FLUTTER_NOTIFICATION_CLICK"
-      }
-    }).then((value) {
-      emit(SendNotificationSuccessState());
-    }).catchError((onError) {
-      emit(SendNotificationErrorState());
-    });
-  }
-*/
+
 }

@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
 
 class ChatCubit extends Cubit<ChatStates> {
   ChatCubit() : super(AppInitialState());
@@ -121,9 +122,9 @@ class ChatCubit extends Cubit<ChatStates> {
         .collection('messages')
         .add(model.toMap())
         .then((value) {
-      //  emit(SendMessageSuccess());
+      emit(SendMessageSuccess());
     }).catchError((error) {
-      //  emit(SendMessageError());
+      emit(SendMessageError());
     });
   }
 
@@ -199,99 +200,99 @@ class ChatCubit extends Cubit<ChatStates> {
   }
 
   //create group func
-  //users > 'uid' > groups > 'groupId' > users > ["Mohammed, Ahmed, Rana"]
   void createGroup({
-    required List<String> listOfUsers,
     required String groupName,
-    required String groupId,
   }) {
-    GroupModel model = GroupModel(
+    String groupId = const Uuid().v4();
+    GroupModel groupModel = GroupModel(
       groupName: groupName,
       groupId: groupId,
-      usersInGroup: listOfUsers,
       adminId: user!.id,
+      groupImage: user!.image,
     );
-    FirebaseFirestore.instance
-        .collection('users')
-        .doc(user!.id)
-        .collection('groups')
-        .add(model.toMap())
-        .then((value) {
-      emit(CreateGroupSuccess());
-    }).catchError((error) {
-      emit(CreateGroupError());
-    });
+    store.collection('groups').doc(groupId).set(groupModel.toMap());
   }
 
-  //update group func [add new user > 'John', 'Yasmeen']
-  //users > 'uid' > groups > 'groupId' > users > ['Mohammed', 'Ahmed', 'Rana', 'John', 'Yasmeen']
-  void setNewUserInGroup({
-    required List<String> list,
-    required String groupId,
-    required String groupName,
-  }) async {
-    GroupModel model = GroupModel(
-      groupName: groupName,
-      usersInGroup: list,
-      groupId: groupId,
+  //send message func
+  void sendMessageToGroup({
+    required String receiverId,
+    required String message,
+    required String messageId,
+  }) {
+    MessageModel model = MessageModel(
+      message: message,
+      senderId: user!.id,
+      messageId: messageId,
+      receiverId: receiverId,
+      dateTime: Timestamp.now(),
     );
-    var docSetNewUser = await store
-        .collection('users')
-        .doc(user!.id)
+    //to store message in chat sender
+    store
         .collection('groups')
-        .limit(1)
-        .where("groupId", isEqualTo: groupId)
-        .get();
-    docSetNewUser.docs[0].reference.set(model.toMap());
+        .doc(receiverId)
+        .collection("messages")
+        .add((model.toMap()));
+    //to store message in chat receiver
+    store
+        .collection('groups')
+        .doc(receiverId)
+        .collection("messages")
+        .add((model.toMap()));
+  }
+
+  // update group func [add new user > 'John', 'Yasmeen']
+  void setNewUserInGroup({
+    required String groupId,
+    bool status = true,
+    required String userId,
+  }) {
+    Map<String, dynamic> user() {
+      return {
+        'id': userId,
+        'status': status,
+      };
+    }
+    store.collection('groups').doc(groupId).collection("users").add(user());
   }
 
   List<String> usersInGroup = [];
 
-  void getUsersInGroup() {
+  void getUsersInGroup({required String groupId}) {
     store
-        .collection("users")
-        .doc(user!.id)
-        .collection("groups")
-        .where("groupId", isEqualTo: "6ea9a6a3-e0b0-4a5d-9004-d402d6bf1e5b")
-        .get()
-        .then(
-      (value) {
-        for (var element in value.docs) {
-          element["usersInGroup"].forEach((element) {
-            usersInGroup.add(element);
-          });
-        }
-      },
-    );
-  }
-
-  void deleteUserFromGroup() {
-    store
-        .collection("users")
-        .doc(user!.id)
-        .collection("groups")
-        .where("groupId", isEqualTo: "515eae02-b9ae-4c20-9519-24065d4b6f15")
-        .get()
-        .then(
-      (value) {
-        for (var element in value.docs) {
-          element["users"].removeWhere((item) => {item["userId"] == "000"});
-        }
-      },
-    ).catchError((onError) {});
-  }
-
-  List<GroupModel> groups = [];
-
-  void getGroups() {
-    store
-        .collection("users")
-        .doc("userId")
         .collection('groups')
+        .doc(groupId)
+        .collection("users")
         .get()
         .then((value) {
       for (var element in value.docs) {
-        groups.add(GroupModel.fromJson(element.data()));
+        userInGroup.add(element.data()['id']);
+      }
+      if (kDebugMode) {
+        print("HZM ${value.docs.first.data()['id']}");
+      }
+    });
+  }
+
+  void deleteUserFromGroup({required String groupId, required String userId}) {
+    store
+        .collection('groups')
+        .doc(groupId)
+        .collection("users")
+        .where("id", isEqualTo: userId)
+        .get()
+        .then((value) {
+      for (var element in value.docs) {
+        element.reference.delete();
+      }
+    });
+  }
+
+  GroupModel? groups;
+
+  void getGroups() {
+    store.collection('groups').get().then((value) {
+      for (var element in value.docs) {
+        groups = GroupModel.fromJson(element.data());
       }
       emit(GetGroupsSuccessState());
     }).catchError((onError) {
@@ -308,53 +309,45 @@ class ChatCubit extends Cubit<ChatStates> {
         .update({"userActive": userActive}).then((value) {});
   }
 
-  List<Contact> contacts = [];
-
-  void getContacts() {
-    emit(GetContactsLoading());
-    ContactsService.getContacts().then((List<Contact> value) {
-      for (var element in value) {
-        contacts.add(element);
-      }
-      emit(GetContactsSuccess());
-    }).catchError((onError) {
-      emit(GetContactsError());
-    });
-  }
-
 // list to add user active
   List<String> listUserActive = [];
   List<UserModel> usersActiveModel = [];
 
+  List<Contact> contacts = [];
+
 // get user active func
-  void getActiveUsers() {
+  void getActiveUsers() async {
     emit(GetOnlineUsersLoading());
+    List<Contact> _contacts =
+        await ContactsService.getContacts(withThumbnails: true);
+    contacts = _contacts;
     store
         .collection("users")
         .where("userActive", isEqualTo: true)
         .snapshots()
-        .listen(
-      (event) {
-        listUserActive = [];
-        usersActiveModel = [];
-        for (var element in event.docs) {
-          // for (var contact in contacts) {
-          //   for (var phone in contact.phones!) {
-          if (/*phone.value == element.data()['phone'] &&*/
-              listUserActive.contains(element.id) == false) {
-            usersActiveModel.add(UserModel.fromJson(element.data()));
-            listUserActive.add(element.id);
+        .listen((event) {
+      listUserActive = [];
+      usersActiveModel = [];
+      for (var element in event.docs) {
+        for (var contact in contacts) {
+          for (var phone in contact.phones!) {
+            if (phone.value == element.data()['phone'] &&
+                listUserActive.contains(element.id) == false) {
+              usersActiveModel.add(UserModel.fromJson(element.data()));
+              listUserActive.add(element.id);
+            }
           }
         }
-        //   }
-        // }
-        emit(GetActiveUsersSuccess());
-      },
-    );
+      }
+      emit(GetActiveUsersSuccess());
+    });
   }
 
-  void getUsers() {
+  void getUsers() async {
     emit(GetUsersLoading());
+    List<Contact> _contacts =
+        await ContactsService.getContacts(withThumbnails: true);
+    contacts = _contacts;
     store.collection('users').get().then((value) {
       for (var element in value.docs) {
         store
@@ -365,28 +358,37 @@ class ChatCubit extends Cubit<ChatStates> {
             .collection('messages')
             .orderBy('dateTime', descending: true)
             .snapshots()
-            .listen((value) {
-          UserModel userModel = UserModel(
-            token: element.data()['token'],
-            id: element.data()['id'],
-            username: element.data()['username'],
-            phone: element.data()['phone'],
-            image: element.data()['image'],
-            lastMessage: value.docs.first.data()["message"],
-            timeLastMessage: value.docs.first.data()["dateTime"],
-          );
-          if (value.docs.first.data()["message"].isNotEmpty) {
-            users.add(userModel);
-          }
-        });
+            .listen(
+          (event) {
+            for (var contact in contacts) {
+              for (var phone in contact.phones!) {
+                UserModel userModel = UserModel(
+                  token: element.data()['token'],
+                  id: element.data()['id'],
+                  username: element.data()['username'],
+                  phone: element.data()['phone'],
+                  image: element.data()['image'],
+                  lastMessage: event.docs.first.data()["message"],
+                  timeLastMessage: event.docs.first.data()["dateTime"],
+                );
+                if (phone.value == element.data()['phone']) {
+                  allUsers.add(userModel);
+                  if (event.docs.first.data()["message"].isNotEmpty) {
+                    users.add(userModel);
+                  }
+                }
+              }
+            }
+          },
+        );
       }
       emit(GetUsersSuccess());
-
-    }).catchError(
-      (onError) {
-        emit(GetUsersError(onError.toString()));
-      },
-    );
+    }).catchError((onError) {
+      if (kDebugMode) {
+        print("HZM ${onError.toString()}");
+      }
+      emit(GetUsersError(onError.toString()));
+    });
   }
 
   String readTimestamp(int? timestamp) {

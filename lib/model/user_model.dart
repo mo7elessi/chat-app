@@ -10,13 +10,14 @@ class UserModel {
   String? image;
   bool? isEmailVerified = true;
   String? lastMessage;
-  Timestamp? timeLastMessage ;
+  Timestamp? timeLastMessage;
+
   bool? userActive;
 
   UserModel({
-    required this.token,
+    this.token,
     this.id,
-    required this.username,
+    this.username,
     this.email,
     this.isEmailVerified,
     this.phone,

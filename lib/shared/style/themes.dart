@@ -1,5 +1,8 @@
+import 'dart:ui';
+
 import 'package:chat_app/shared/style/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 OutlineInputBorder outlineInputBorder = OutlineInputBorder(
   borderRadius: BorderRadius.circular(0.0),
@@ -9,6 +12,15 @@ OutlineInputBorder outlineInputBorder = OutlineInputBorder(
 ThemeData theme = ThemeData(
   fontFamily: '',
   scaffoldBackgroundColor: backgroundColor,
+  appBarTheme: const AppBarTheme(
+    elevation: 0.0,
+    backgroundColor: primaryColor,
+    titleTextStyle: TextStyle(fontSize: 14),
+    systemOverlayStyle: SystemUiOverlayStyle(
+      statusBarColor: primaryColor,
+      statusBarIconBrightness: Brightness.light,
+    ),
+  ),
   inputDecorationTheme: InputDecorationTheme(
     hoverColor: primaryColor,
     focusColor: primaryColor,

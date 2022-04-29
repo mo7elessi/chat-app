@@ -1,3 +1,4 @@
+
 import 'package:chat_app/shared/components/constance.dart';
 import 'package:chat_app/shared/components/shared_components.dart';
 import 'package:chat_app/shared/cubit/cubit.dart';
@@ -6,9 +7,12 @@ import 'package:chat_app/shared/Network/local/cache_helper.dart';
 import 'package:chat_app/shared/style/colors.dart';
 import 'package:chat_app/views/user/createAccount/enter_phone_screen.dart';
 import 'package:chat_app/views/user/createAccount/enter_user_data_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../views/group/create_group.dart';
 
 class HomeLayout extends StatelessWidget {
   const HomeLayout({Key? key}) : super(key: key);
@@ -24,13 +28,7 @@ class HomeLayout extends StatelessWidget {
           return Scaffold(
             key: scaffoldKey,
             appBar: AppBar(
-              elevation: 0.0,
               automaticallyImplyLeading: false,
-              backgroundColor: primaryColor,
-              systemOverlayStyle: const SystemUiOverlayStyle(
-                statusBarColor: primaryColor,
-                statusBarIconBrightness: Brightness.light,
-              ),
               titleTextStyle: const TextStyle(fontWeight: FontWeight.bold),
               title: Text(cubit.appBarTitle[cubit.currentIndex].toUpperCase()),
               actions: [
@@ -39,7 +37,9 @@ class HomeLayout extends StatelessWidget {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.search),
-                        onPressed: () {},
+                        onPressed: () {
+
+                        },
                       ),
                       /*InkWell(
                         onTap: () {
@@ -53,14 +53,13 @@ class HomeLayout extends StatelessWidget {
                       ),*/
                     ],
                   ),
-                /*if (cubit.currentIndex == homeIndex)
+                if (cubit.currentIndex == homeIndex)
                   IconButton(
                       icon: const Icon(Icons.add),
                       onPressed: () {
-                        CacheHelper.clearData(key: 'id').then(
-                          (value) {},
-                        );
-                      }),*/
+                        navigatorTo(
+                            context: context, page: const CreateGroupScreen());
+                      }),
                 if (cubit.currentIndex == 3)
                   IconButton(
                     icon: const Icon(Icons.settings),
@@ -68,7 +67,9 @@ class HomeLayout extends StatelessWidget {
                       CacheHelper.clearData(key: 'id').then(
                         (value) {
                           toastMessage(message: value.toString());
-                          navigatorTo(context: context, page: const EnterUserDataScreen());
+                          navigatorTo(
+                              context: context,
+                              page: const EnterUserDataScreen());
                         },
                       );
                     },

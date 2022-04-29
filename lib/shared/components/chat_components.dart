@@ -89,7 +89,7 @@ Widget buildChatItem({
       );
     },
     child: Container(
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 10, bottom: 10),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 16),
       child: Row(
         children: <Widget>[
           Expanded(
@@ -100,7 +100,7 @@ Widget buildChatItem({
                     CircleAvatar(
                       backgroundImage: NetworkImage(
                           model.image ?? "assets/images/logoChat.png"),
-                      maxRadius: 30,
+                      maxRadius: 25,
                     ),
                     if (ChatCubit
                         .get(context)
@@ -138,7 +138,7 @@ Widget buildChatItem({
                             Text(
                               model.username.toString(),
                               style: const TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 14,
                                   color: Color(0xff383838),
                                   overflow: TextOverflow.ellipsis,
                                   fontWeight: FontWeight.bold),
@@ -161,7 +161,7 @@ Widget buildChatItem({
                             Text(
                               "${model.lastMessage}",
                               style: TextStyle(
-                                  fontSize: 13,
+                                  fontSize: 12,
                                   color: Colors.grey.shade600,
                                   overflow: TextOverflow.ellipsis),
                             ),
@@ -222,7 +222,8 @@ AppBar chatDetailsAppBar({
                     username,
                     style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 16,
+                        fontSize: 14,
+                        overflow: TextOverflow.ellipsis,
                         fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(
@@ -271,7 +272,7 @@ Widget buildSenderMessage({
           margin: const EdgeInsets.only(left: 10, top: 5, right: 50),
           decoration: BoxDecoration(
             color: Colors.grey.shade200,
-            borderRadius: const BorderRadius.all(Radius.circular(20)),
+            borderRadius: const BorderRadius.all(Radius.circular(5)),
           ),
           child: Text("${cubit.messages[index].message}"),
         ),
@@ -280,7 +281,7 @@ Widget buildSenderMessage({
           margin: const EdgeInsets.only(top: 5, left: 10),
           child: Text(
             cubit.readTimestamp(cubit.messages[index].dateTime!.seconds),
-            style: const TextStyle(fontSize: 10, color: Colors.grey),
+            style: const TextStyle(fontSize:9, color: Colors.grey),
           ),
         ),
       ],
@@ -321,7 +322,7 @@ Widget buildReceiverMessage({
                             child: const Text(
                               'Delete Message',
                               style: TextStyle(
-                                  color: Colors.black87, fontSize: 16),
+                                  color: Colors.black87, fontSize: 14),
                             ),
                             onPressed: () {
                               ChatCubit.get(context).deleteMessage(
@@ -339,7 +340,7 @@ Widget buildReceiverMessage({
                             child: const Text(
                               'Cancel Sending',
                               style: TextStyle(
-                                  color: Colors.black87, fontSize: 16),
+                                  color: Colors.black87, fontSize: 14),
                             ),
                             onPressed: () {
                               ChatCubit.get(context).deleteMessage(
@@ -361,7 +362,7 @@ Widget buildReceiverMessage({
             margin: const EdgeInsets.only(left: 50, top: 5, right: 10),
             decoration: const BoxDecoration(
               color: primaryColor,
-              borderRadius: BorderRadius.all(Radius.circular(20)),
+              borderRadius: BorderRadius.all(Radius.circular(5)),
             ),
             child: Text(
               "${cubit.messages[index].message}",
@@ -369,12 +370,11 @@ Widget buildReceiverMessage({
             ),
           ),
         ),
-
         Container(
           margin: const EdgeInsets.only(top: 5, right: 10),
           child: Text(
             cubit.readTimestamp(cubit.messages[index].dateTime!.seconds),
-            style: const TextStyle(fontSize: 10, color: Colors.grey),
+            style: const TextStyle(fontSize: 9, color: Colors.grey),
           ),
         ),
       ],
@@ -444,14 +444,11 @@ Widget buildInputMessage({
                     messageId: const Uuid().v4(),
                     message: messageController.text);
 
-                // cubit.sendNotification(
-                //     token: token,
-                //     title: username,
-                //     body: messageController.text);
                 FCMNotificationServices().sendNotificationToUser(
                     token: token,
                     title: username,
                     body: messageController.text);
+
               }
             },
             child: Container(

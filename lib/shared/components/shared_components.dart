@@ -20,6 +20,7 @@ Widget textInputField(
     Function? onSubmit,
     Function? onChange,
     bool confirmPass = false,
+    bool icon = true,
     bool description = false}) {
   return  SizedBox(
       width: width,
@@ -28,7 +29,7 @@ Widget textInputField(
         keyboardType: keyboard,
         style: const TextStyle(fontSize: 14),
         textAlignVertical: TextAlignVertical.center,
-        decoration: InputDecoration(
+        decoration:icon? InputDecoration(
           fillColor: Colors.white,
           filled: true,
           hintText: hintText,
@@ -39,6 +40,11 @@ Widget textInputField(
                 )
               : null,
           prefixIcon: Icon(prefixIcon),
+        ):
+        InputDecoration(
+          fillColor: Colors.white,
+          filled: true,
+          hintText: hintText,
         ),
         validator: validator,
         //  onChanged: (value) => onChange!(value),

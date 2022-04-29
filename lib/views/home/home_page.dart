@@ -3,6 +3,7 @@ import 'package:chat_app/shared/components/chat_components.dart';
 import 'package:chat_app/shared/cubit/cubit.dart';
 import 'package:chat_app/shared/cubit/state.dart';
 import 'package:conditional_builder/conditional_builder.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -16,6 +17,7 @@ class HomePage extends StatelessWidget {
     return BlocConsumer<ChatCubit, ChatStates>(
       listener: (BuildContext context, ChatStates state) {},
       builder: (BuildContext context, state) {
+
         return ConditionalBuilder(
           condition: state is! GetUsersLoading,
           fallback: (context) => const Center(
