@@ -13,13 +13,11 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     ChatCubit cubit = ChatCubit.get(context);
-
     return BlocConsumer<ChatCubit, ChatStates>(
       listener: (BuildContext context, ChatStates state) {},
       builder: (BuildContext context, state) {
-
         return ConditionalBuilder(
-          condition: state is! GetUsersLoading,
+          condition: cubit.users.isNotEmpty,
           fallback: (context) => const Center(
             child: CircularProgressIndicator(),
           ),
@@ -30,7 +28,7 @@ class HomePage extends StatelessWidget {
               physics: const BouncingScrollPhysics(),
               itemBuilder: (context, index) {
                 return buildChatItem(
-                  model: cubit.users[index],
+                  userModel: cubit.users[index],
                   scaffoldKey: HomeLayout.scaffoldKey,
                   context: context,
                   index: index,

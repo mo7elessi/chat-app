@@ -32,28 +32,7 @@ class HomeLayout extends StatelessWidget {
               titleTextStyle: const TextStyle(fontWeight: FontWeight.bold),
               title: Text(cubit.appBarTitle[cubit.currentIndex].toUpperCase()),
               actions: [
-                if (cubit.currentIndex == homeIndex)
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.search),
-                        onPressed: () {
-
-                        },
-                      ),
-                      /*InkWell(
-                        onTap: () {
-                          navigatorTo(
-                              context: context, page: const ProfilePage());
-                        },
-                        child: CircleAvatar(
-                          radius: 14,
-                          backgroundImage: NetworkImage("${cubit.user?.image}"),
-                        ),
-                      ),*/
-                    ],
-                  ),
-                if (cubit.currentIndex == homeIndex)
+                if (cubit.currentIndex == 1)
                   IconButton(
                       icon: const Icon(Icons.add),
                       onPressed: () {
@@ -66,10 +45,9 @@ class HomeLayout extends StatelessWidget {
                     onPressed: () {
                       CacheHelper.clearData(key: 'id').then(
                         (value) {
-                          toastMessage(message: value.toString());
                           navigatorTo(
                               context: context,
-                              page: const EnterUserDataScreen());
+                              page: const EnterPhoneScreen());
                         },
                       );
                     },

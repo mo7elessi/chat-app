@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:chat_app/layout/main_layout.dart';
 import 'package:chat_app/model/user_model.dart';
 import 'package:chat_app/shared/Network/local/cache_helper.dart';
 import 'package:chat_app/shared/components/shared_components.dart';
@@ -19,32 +20,54 @@ class UserCubit extends Cubit<UserStates> {
 
   //firebase
   final FirebaseAuth auth = FirebaseAuth.instance;
- final FirebaseFirestore store = FirebaseFirestore.instance;
+  final FirebaseFirestore store = FirebaseFirestore.instance;
   final firebase_storage.FirebaseStorage storage =
       firebase_storage.FirebaseStorage.instance;
 
   String? username;
-  File? userImage;
+  //object from UserModel
+  UserModel? user;
 
-  void createUser({
-    required String id,
-    required String username,
-    required String email,
-    required bool isEmailVerified,
-  }) {
-    UserModel user = UserModel(
-      token: token,
-      id: id,
-      username: username,
-      email: email,
-      isEmailVerified: isEmailVerified,
-    );
-    store.collection('users').doc(id).set(user.toMap()).then((value) {
-      emit(CreateUserSuccessState());
-    }).catchError((onError) {
-      emit(CreateUserErrorState(onError.toString()));
+  //get current user data func
+  void getUserData() {
+    emit(GetUserDataLoading());
+    store.collection('users').doc(auth.currentUser!.uid).snapshots().listen((value) {
+      user = UserModel.fromJson(value.data());
+      emit(GetUserDataSuccess());
     });
   }
+  bool isFound = false;
+  void checkPhone({required String phone}) {
+      store
+          .collection('users')
+          .where("phone", isEqualTo: phone)
+          .snapshots()
+          .listen((value) {
+          if(value.docs.isNotEmpty ) {
+            isFound = true;
+          }
+      });
+  }
+  //
+  // void createUser({
+  //   required String id,
+  //   required String username,
+  //   required String email,
+  //   required bool isEmailVerified,
+  // }) {
+  //   UserModel user = UserModel(
+  //     token: token,
+  //     id: id,
+  //     username: username,
+  //     email: email,
+  //     isEmailVerified: isEmailVerified,
+  //   );
+  //   store.collection('users').doc(id).set(user.toMap()).then((value) {
+  //     emit(CreateUserSuccessState());
+  //   }).catchError((onError) {
+  //     emit(CreateUserErrorState(onError.toString()));
+  //   });
+  // }
 
   void resetPassword({required String email}) {
     emit(ResetPasswordLoadingState());
@@ -70,13 +93,12 @@ class UserCubit extends Cubit<UserStates> {
 
   void logout(context) {
     CacheHelper.clearData(key: 'id').then((value) {
-      if (value) {
-        toastMessage(message: value.toString());
-      }
     });
   }
 
   var pickImage = ImagePicker();
+  File? userImage;
+  //File? groupImage;
 
   Future<void> pickProfileImage() async {
     final pickedFile = await pickImage.getImage(
@@ -84,16 +106,30 @@ class UserCubit extends Cubit<UserStates> {
     );
     if (pickedFile != null) {
       userImage = File(pickedFile.path);
+      updateUserImage();
       emit(PickProfileImageSuccessState());
     } else {
       emit(PickProfileImageErrorState());
     }
   }
 
+  void updateUserImage() {
+    storage
+        .ref()
+        .child('users/${Uri.file(userImage!.path).pathSegments.last}')
+        .putFile(userImage!)
+        .then((p0) {
+      p0.ref.getDownloadURL().then((value) {
+        store.collection('users').doc(auth.currentUser!.uid).update({"image":value});
+      });
+    });
+  }
+
   void createNewUser({
     required String id,
     required String username,
     required String phoneNumber,
+    required BuildContext context,
   }) {
     storage
         .ref()
@@ -115,17 +151,20 @@ class UserCubit extends Cubit<UserStates> {
           emit(CreateUserErrorState(onError));
         });
         emit(UploadImageProfileSuccessState());
+        navigatorTo(page: const HomeLayout(), context: context);
       },
     ).catchError((onError) {
       emit(UploadImageProfileErrorState(error: onError));
     });
   }
+
   void setStatusUser({required bool userActive}) {
     store
         .collection("users")
         .doc(auth.currentUser!.uid)
         .update({"userActive": userActive}).then((value) {});
   }
+
   bool sent = false;
   String verificationID = "1212";
   String phoneNumber = "";
@@ -162,7 +201,9 @@ class UserCubit extends Cubit<UserStates> {
       emit(LoginErrorState("error"));
     });
   }
+
   String? userId;
+
   void verifyOTP({
     required String smsCode,
     required String username,
@@ -174,15 +215,10 @@ class UserCubit extends Cubit<UserStates> {
       verificationId: verificationID,
       smsCode: smsCode,
     );
-    toastMessage(message: credential.smsCode.toString());
     await auth.signInWithCredential(credential).then((value) {
-       userId = value.user!.uid;
-      createNewUser(
-        phoneNumber: phoneNumber,
-        username: username,
-        id: userId!,
-      );
-      emit(VerifyOTPSuccessState());
+      userId = value.user!.uid;
+      CacheHelper.saveData(key: 'id',value: value.user!.uid);
+        emit(VerifyOTPSuccessState());
     }).catchError((onError) {
       emit(VerifyOTPErrorState(onError.toString()));
     });

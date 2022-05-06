@@ -15,7 +15,7 @@ class OnlineUsersPage extends StatelessWidget {
     return BlocConsumer<ChatCubit, ChatStates>(
       listener: (context, state) {},
       builder: (context, state) => ConditionalBuilder(
-        condition: state is! GetOnlineUsersLoading,
+        condition:ChatCubit.get(context).usersActiveModel.isNotEmpty,
         fallback: (context) => const Center(
           child: CircularProgressIndicator(),
         ),
@@ -26,7 +26,7 @@ class OnlineUsersPage extends StatelessWidget {
               physics: const BouncingScrollPhysics(),
               itemBuilder: (context, index) {
                 return buildChatItem(
-                    model: ChatCubit.get(context).usersActiveModel[index],
+                    userModel: ChatCubit.get(context).usersActiveModel[index],
                     scaffoldKey: HomeLayout.scaffoldKey,
                     context: context,
                     index: index);

@@ -1,8 +1,22 @@
-
+import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 
 String userId = '';
 String token = '';
+
+List<Contact> contacts = [];
+List<Item> phones = [];
+
+void getContacts() async {
+  List<Contact> _contacts =
+      await ContactsService.getContacts(withThumbnails: true);
+  contacts = _contacts;
+  for (var element in contacts) {
+    for (var phone in element.phones!) {
+      phones.add(phone);
+    }
+  }
+}
 
 Future<dynamic> navigatorTo(
     {required BuildContext context, required Widget page}) {
@@ -14,7 +28,7 @@ Future<dynamic> navigatorAndFinished(
   return Navigator.pushAndRemoveUntil(
     context,
     MaterialPageRoute(builder: (context) => page),
-        (route) {
+    (route) {
       return false;
     },
   );

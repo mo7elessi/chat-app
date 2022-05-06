@@ -11,8 +11,8 @@ class UserModel {
   bool? isEmailVerified = true;
   String? lastMessage;
   Timestamp? timeLastMessage;
-
   bool? userActive;
+  bool? isChecked = false;
 
   UserModel({
     this.token,

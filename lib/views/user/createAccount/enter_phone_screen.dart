@@ -111,9 +111,6 @@ class EnterPhoneScreen extends StatelessWidget {
                                   if (phoneController.text.isNotEmpty) {
                                     cubit.phoneNumber =
                                         "$code ${phoneController.text}";
-                                    toastMessage(
-                                        message:
-                                            "$code ${phoneController.text}");
                                     cubit.loginWithPhone(
                                         phoneNumber:
                                             "$code ${phoneController.text}");

@@ -1,21 +1,22 @@
-import 'package:chat_app/model/message_model.dart';
-import 'package:chat_app/model/user_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class GroupModel {
+  String? topic;
   String? groupId;
   String? groupName;
   String? adminId;
+  String? lastMessage;
+  Timestamp? timeLastMessage;
   String? groupImage;
- // UserModel usersInGroup;
- // List<MessageModel>? messageModel;
 
   GroupModel({
+    this.topic,
     this.groupId,
     required this.groupName,
     this.adminId,
     this.groupImage,
-   // this.usersInGroup,
-  //  this.messageModel,
+    this.lastMessage,
+    this.timeLastMessage,
   });
 
   GroupModel.fromJson(Map<String, dynamic>? json) {
@@ -23,20 +24,16 @@ class GroupModel {
     groupName = json['groupName'];
     adminId = json['adminId'];
     groupImage = json['groupImage'];
-    // json['usersInGroup'].forEach((element) {
-    //   usersInGroup!.add(element);
-    // });
-    // json['messageModel'].forEach((element) {
-    //   messageModel!.add(element);
-    // });
+    topic = json['topic'];
+    lastMessage = json['lastMessage'];
+    timeLastMessage = json['timeLastMessage'];
   }
 
   Map<String, dynamic> toMap() {
     return {
+      'topic': topic,
       'groupId': groupId,
       'groupName': groupName,
-     // 'usersInGroup': usersInGroup,
-     // 'messageModel': messageModel,
       'groupImage': groupImage,
       'adminId': adminId,
     };

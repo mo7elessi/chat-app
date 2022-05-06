@@ -77,3 +77,9 @@ class UploadImageProfileErrorState extends UserStates {
 }
 
 class UploadImageProfileSuccessState extends UserStates {}
+//get user data state
+class GetUserDataLoading extends UserStates {}
+
+class GetUserDataSuccess extends UserStates {}
+
+class GetUserDataError extends UserStates {}
